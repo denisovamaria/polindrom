@@ -1,64 +1,75 @@
-#include <fstream>
-#include <string>
 #include <iostream>
+#include <fstream>
+#include <vector>
 
 using namespace std;
 
-int main() {
-    string str;
-    ifstream in("input.txt");
-    ofstream out("output.txt");
-    in >> str;
-    in.close();
-    int n;
-    n = str.length();
-    int **matrix = new int *[n];
-    for (int i = 0; i < n; i++) {
-        matrix[i] = new int[n];
+pair<int, string> longestPalindrome(const string& s) {
+    int n = s.length();
+
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+
+    for (int i = 0; i < n; ++i) {
+        dp[i][i] = 1;
     }
 
-    for (int i = 0; i < n; i++) {
-        matrix[i][i] = 1;
-    }
-    for (int i = 0; i < n - 1; i++) {
-        if (str[i] == str[i + 1])
-            matrix[i][i + 1] = 2;
-        else
-            matrix[i][i + 1] = 1;
-    }
+    for (int len = 2; len <= n; ++len) {
+        for (int i = 0; i <= n - len; ++i) {
+            int j = i + len - 1;
 
-    for (int i = n - 3; i > -1; i--) {
-        for (int j = 2; j < n; j++) {
-            if (i < j) {
-                if (str[i] == str[j])
-                    matrix[i][j] = matrix[i + 1][j - 1] + 2;
-                else
-                    matrix[i][j] = max(matrix[i + 1][j], matrix[i][j - 1]);
+            if (s[i] == s[j] && len == 2) {
+                dp[i][j] = 2;
+            } else if (s[i] == s[j]) {
+                dp[i][j] = dp[i + 1][j - 1] + 2;
+            } else {
+                dp[i][j] = max(dp[i][j - 1], dp[i + 1][j]);
             }
         }
     }
-    string result;
-    int i = 0;
-    int j = n - 1;
-    int length = matrix[0][n - 1];
-    while (length > 0 && i <= j) {
-        if (str[i] == str[j]) {
-            result += str[i];
-            i++;
-            j--;
-            length -= 2;
+
+    int length = dp[0][n - 1];
+
+    string palindrome;
+    palindrome.reserve(length);
+
+    int i = 0, j = n - 1;
+    while (i < j) {
+        if (s[i] == s[j]) {
+            palindrome.push_back(s[i]);
+            ++i;
+            --j;
+        } else if (dp[i][j - 1] > dp[i + 1][j]) {
+            --j;
         } else {
-            if (matrix[i][j - 1] < matrix[i + 1][j])
-                i++;
-            else
-                j--;
+            ++i;
         }
     }
-    for (int k = matrix[0][n - 1] / 2 - 1; k > -1; k--) {
-        result += result[k];
+
+    if (i == j) {
+        palindrome.push_back(s[i]);
     }
-    out << matrix[0][n - 1] << endl;
-    out << result;
-    out.close();
+
+    for (int k = palindrome.length() - (length % 2) - 1; k >= 0; --k) {
+        palindrome.push_back(palindrome[k]);
+    }
+
+    return make_pair(length, palindrome);
+}
+
+int main() {
+    ifstream input("input.txt");
+    ofstream output("output.txt");
+
+    string s;
+    input >> s;
+
+    pair<int, string> result = longestPalindrome(s);
+
+    output << result.first << endl;
+    output << result.second << endl;
+
+    input.close();
+    output.close();
+
     return 0;
 }
